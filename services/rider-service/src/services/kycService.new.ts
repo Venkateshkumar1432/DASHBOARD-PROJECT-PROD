@@ -97,6 +97,10 @@ export class KycService {
       url: fileUrl,
       message: "Document uploaded successfully",
     };
+  } catch (error) {
+    console.error(`Error uploading document: ${(error as Error).message}`);
+    throw new Error(`Failed to upload document: ${(error as Error).message}`);
+  }
   }
 
   /**

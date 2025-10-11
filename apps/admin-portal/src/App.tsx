@@ -24,8 +24,8 @@ import Teams from './pages/Teams'
 import CreateTeam from './pages/CreateTeam'
 import EditTeam from './pages/EditTeam'
 import ClientStoreManagement from './pages/ClientStoreManagement'
-import RiderEarnings from './pages/RiderEarnings'
 import RiderManagement from './pages/RiderManagement'
+import RiderEarnings from './pages/RiderEarnings'
 import RiderProfile from './pages/RiderProfile'
 import RiderDetail from './pages/RiderDetail'
 
@@ -56,7 +56,7 @@ import CityDashboard from './pages/CityDashboard'
 // Service Management Pages
 import ServiceManagement from './pages/ServiceManagement'
 import ServiceScheduleForm from './pages/ServiceScheduleForm'
-import UnifiedServiceDashboard from './pages/UnifiedServiceDashboard'
+// import UnifiedServiceDashboard from './pages/UnifiedServiceDashboard'
 
 // Spare Parts Management Pages
 import SpareParts from './pages/SpareParts'
@@ -69,6 +69,7 @@ import SparePartDetails from './pages/SparePartDetails'
 import SparePartsDashboard from './pages/SparePartsDashboard'
 
 // Spare Parts Outward Flow Pages
+/* Commented out Spare Parts Outward Flow imports per request
 import OutwardFlowManagement from './pages/OutwardFlowManagement'
 import ServiceRequestManagement from './pages/ServiceRequestManagement'
 import ServiceRequestForm from './pages/ServiceRequestForm'
@@ -77,6 +78,7 @@ import PartRequestForm from './pages/PartRequestForm'
 import ApprovalManagement from './pages/ApprovalManagement'
 import InstallationManagement from './pages/InstallationManagement'
 import CostTrackingManagement from './pages/CostTrackingManagement'
+*/
 
 // Debug Components
 import DebugVehicleAPI from './pages/DebugVehicleAPI'
@@ -87,9 +89,19 @@ import Roles from './pages/Roles'
 import Profile from './pages/Profile'
 import Settings from './pages/Settings'
 
+/* Commented out Outward Flow and Order Management imports (remove if you want to delete)
+import OutwardFlow from './pages/OutwardFlow';
+import OutwardFlowRequests from './pages/OutwardFlowRequests';
+import OrderList from './pages/OrderList';
+import OrderCreate from './pages/OrderCreate';
+import OrderDetail from './pages/OrderDetail';
+*/
+
 // Protected Route component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuth()
+  
+  console.log('ProtectedRoute state:', { isAuthenticated, isLoading })
 
   if (isLoading) {
     return (
@@ -104,7 +116,13 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
     )
   }
 
-  return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />
+  if (!isAuthenticated) {
+    console.log('Not authenticated, redirecting to login')
+    return <Navigate to="/login" replace />
+  }
+
+  console.log('Authenticated, rendering protected content')
+  return <>{children}</>
 }
 
 // Public Route component (redirect if already authenticated)
@@ -114,6 +132,29 @@ const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 }
 
 const App: React.FC = () => {
+  const { isAuthenticated, isLoading } = useAuth()
+  
+  console.log('Auth state:', { isAuthenticated, isLoading })
+
+  // Show loading spinner while checking auth
+  if (isLoading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
+        <CircularProgress />
+      </Box>
+    )
+  }
+
+  // If not authenticated and not on auth-related pages, redirect to login
+  const currentPath = window.location.pathname
+  const isAuthPath = ['/login', '/signup', '/forgot-password', '/reset-password', '/verify-email'].some(path => 
+    currentPath.startsWith(path)
+  )
+
+  if (!isAuthenticated && !isAuthPath) {
+    return <Navigate to="/login" replace />
+  }
+
   return (
     <Routes>
       {/* Public routes */}
@@ -180,8 +221,8 @@ const App: React.FC = () => {
                 <Route path="/teams/edit/:id" element={<EditTeam />} />
                 <Route path="/clients" element={<ClientStoreManagement />} />
                 <Route path="/stores" element={<ClientStoreManagement />} />
-                <Route path="/rider-earnings" element={<RiderEarnings />} />
                 <Route path="/rider-management" element={<RiderManagement />} />
+                <Route path="/rider-earnings" element={<RiderEarnings />} />
                 <Route path="/rider-management/:riderId" element={<RiderDetail />} />
 
                 {/* Vehicle Management Routes */}
@@ -221,7 +262,7 @@ const App: React.FC = () => {
                 {/* Service Management Routes */}
                 <Route path="/services" element={<ServiceManagement />} />
                 <Route path="/services/schedule" element={<ServiceScheduleForm />} />
-                <Route path="/unified-service" element={<UnifiedServiceDashboard />} />
+                {/* <Route path="/unified-service" element={<UnifiedServiceDashboard />} /> */}
 
                 {/* Spare Parts Management Routes */}
                 <Route path="/spare-parts" element={<SpareParts />} />
@@ -236,6 +277,7 @@ const App: React.FC = () => {
                 <Route path="/spare-parts/dashboard" element={<SparePartsDashboard />} />
 
                 {/* Spare Parts Outward Flow Routes */}
+{/*
                 <Route path="/spare-parts/outward" element={<OutwardFlowManagement />} />
                 <Route path="/spare-parts/outward/service-requests" element={<ServiceRequestManagement />} />
                 <Route path="/spare-parts/outward/service-requests/create" element={<ServiceRequestForm />} />
@@ -246,12 +288,14 @@ const App: React.FC = () => {
                 <Route path="/spare-parts/outward/approvals" element={<ApprovalManagement />} />
                 <Route path="/spare-parts/outward/installations" element={<InstallationManagement />} />
                 <Route path="/spare-parts/outward/cost-tracking" element={<CostTrackingManagement />} />
+*/}
 
                 {/* Order Management Routes */}
-                <Route path="/orders" element={<OrderList />} />
-                <Route path="/orders/new" element={<OrderForm />} />
-                <Route path="/orders/:id/edit" element={<OrderForm />} />
-                <Route path="/orders/:id" element={<OrderDetail />} />
+                {/* Commented out Order management routes per request
+                  <Route path="/orders" element={<OrderList />} />
+                  <Route path="/orders/new" element={<OrderForm />} />
+                  <Route path="/orders/:id" element={<OrderDetail />} />
+                */}
 
                 {/* Debug Routes */}
                 <Route path="/debug/vehicle-api" element={<DebugVehicleAPI />} />
@@ -264,6 +308,14 @@ const App: React.FC = () => {
           </ProtectedRoute>
         }
       />
+
+      {/* Redirect removed features to home so they can't be opened directly */}
+      <Route path="/spare-parts/outward/*" element={<Navigate to="/" replace />} />
+      <Route path="/orders/*" element={<Navigate to="/" replace />} />
+      {/* also catch exact paths if present */}
+      <Route path="/spare-parts/outward" element={<Navigate to="/" replace />} />
+      <Route path="/orders" element={<Navigate to="/" replace />} />
+      <Route path="/orders/new" element={<Navigate to="/" replace />} />
     </Routes>
   )
 }

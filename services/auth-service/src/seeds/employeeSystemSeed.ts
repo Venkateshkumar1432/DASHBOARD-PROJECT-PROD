@@ -7,7 +7,6 @@ async function seedEmployeeSystem() {
   console.log("🌱 Seeding employee management system...");
 
   try {
-    // Create super admin user
     const hashedPassword = await bcrypt.hash("SuperAdmin@123", 12);
 
     const superAdminUser = await prisma.user.create({
@@ -23,7 +22,6 @@ async function seedEmployeeSystem() {
 
     console.log("✅ Created super admin user");
 
-    // Get IT department and create super admin employee
     const itDepartment = await prisma.department.findFirst({
       where: { code: "IT" },
     });
@@ -36,19 +34,18 @@ async function seedEmployeeSystem() {
       data: {
         userId: superAdminUser.id,
         employeeId: "EMP001",
-        firstName: "Super",
-        lastName: "Admin",
-        email: "admin@ev91.com",
+        // firstName: "Super",
+        // lastName: "Admin",
+        // email: "admin@ev91.com",
         departmentId: itDepartment.id,
         position: "System Administrator",
         hireDate: new Date(),
-        isActive: true,
+        // isActive: true,
       },
     });
 
     console.log("✅ Created super admin employee");
 
-    // Assign super admin role
     const superAdminRole = await prisma.role.findFirst({
       where: { name: "Super Admin" },
     });
@@ -67,7 +64,6 @@ async function seedEmployeeSystem() {
 
     console.log("✅ Assigned super admin role");
 
-    // Create a few demo employees
     const demoEmployees = [
       {
         email: "john.manager@ev91.com",
@@ -130,14 +126,14 @@ async function seedEmployeeSystem() {
         data: {
           userId: user.id,
           employeeId: emp.employeeId,
-          firstName: emp.firstName,
-          lastName: emp.lastName,
-          email: emp.email,
+          // firstName: emp.firstName,
+          // lastName: emp.lastName,
+          // email: emp.email,
           departmentId: department!.id,
           teamId: team?.id,
           position: emp.position,
           hireDate: new Date(),
-          isActive: true,
+          // isActive: true,
         },
       });
 
@@ -158,9 +154,8 @@ async function seedEmployeeSystem() {
       console.log(`✅ Created demo employee: ${emp.firstName} ${emp.lastName}`);
     }
 
-    // Set John as manager of Backend Development team
     const johnEmployee = await prisma.employee.findFirst({
-      where: { email: "john.manager@ev91.com" },
+      where: { userId: (await prisma.user.findFirst({ where: { email: "john.manager@ev91.com" } }))!.id },
     });
 
     const backendTeam = await prisma.team.findFirst({
@@ -173,9 +168,8 @@ async function seedEmployeeSystem() {
         data: { managerId: johnEmployee.id },
       });
 
-      // Set Jane as reporting to John
-      await prisma.employee.update({
-        where: { email: "jane.developer@ev91.com" },
+      await prisma.employee.updateMany({
+        where: { userId: (await prisma.user.findFirst({ where: { email: "jane.developer@ev91.com" } }))!.id },
         data: { managerId: johnEmployee.id },
       });
 
@@ -196,7 +190,6 @@ async function seedEmployeeSystem() {
   }
 }
 
-// Run the seed function
 if (require.main === module) {
   seedEmployeeSystem()
     .then(() => {

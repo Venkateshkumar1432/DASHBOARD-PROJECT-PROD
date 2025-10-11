@@ -15,7 +15,7 @@ COPY . .
 RUN if [ -f "prisma/schema.prisma" ]; then npx prisma generate; fi
 
 # Expose port
-EXPOSE 6000
+EXPOSE 4005
 
 # Run migrations and start the application
-CMD ["sh", "-c", "npx prisma migrate deploy && npm run dev"]
+CMD ["sh", "-c", "npx prisma migrate deploy && npx prisma db seed && npm run dev"]

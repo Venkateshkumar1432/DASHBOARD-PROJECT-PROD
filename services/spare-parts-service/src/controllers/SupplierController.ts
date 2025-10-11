@@ -117,37 +117,51 @@ export class SupplierController {
    * Create new supplier
    */
   async createSupplier(req: Request, res: Response) {
-    try {
-      const supplierData = req.body;
+  try {
+    console.log("📦 Incoming supplier data:", req.body); // add this line
 
-      if (
-        !supplierData.name ||
-        !supplierData.contactPerson ||
-        !supplierData.email
-      ) {
-        return res.status(400).json({
-          success: false,
-          message: "name, contactPerson, and email are required",
-        });
-      }
+    const supplierData = req.body;
 
-      const supplier = await prisma.supplier.create({
-        data: supplierData,
-      });
-
-      res.status(201).json({
-        success: true,
-        data: supplier,
-        message: "Supplier created successfully",
-      });
-    } catch (error) {
-      res.status(500).json({
+    if (
+      !supplierData.name ||
+      !supplierData.contactPerson ||
+      !supplierData.email
+    ) {
+      return res.status(400).json({
         success: false,
-        message: "Failed to create supplier",
-        error: error instanceof Error ? error.message : "Unknown error",
+        message: "name, contactPerson, and email are required",
       });
     }
+
+    const supplier = await prisma.supplier.create({
+      data: {
+  name: supplierData.name,
+  displayName: supplierData.displayName || supplierData.name, // fallback
+  code: supplierData.code || `SUP-${Date.now()}`, // auto-generate if not given
+  contactPerson: supplierData.contactPerson,
+  email: supplierData.email,
+  phone: supplierData.phone,
+  address: supplierData.address,
+  status: supplierData.status || "active",
+  rating: supplierData.rating ?? null,
+},
+    });
+
+    res.status(201).json({
+      success: true,
+      data: supplier,
+      message: "Supplier created successfully",
+    });
+  } catch (error) {
+    console.error("🔥 Error creating supplier:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to create supplier",
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
   }
+}
+
 
   /**
    * Update supplier

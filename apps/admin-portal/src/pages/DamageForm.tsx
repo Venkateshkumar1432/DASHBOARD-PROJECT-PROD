@@ -55,7 +55,8 @@ const DamageForm: React.FC = () => {
   const [loading, setLoading] = useState(isEdit);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  // always keep vehicles as an array to avoid `.find` on undefined
+  const [vehicles, setVehicles] = useState<any[]>([]);
   const [loadingVehicles, setLoadingVehicles] = useState(true);
 
   const {
@@ -86,23 +87,30 @@ const DamageForm: React.FC = () => {
   const statusOptions = ['Reported', 'Under Review', 'Approved for Repair', 'In Repair', 'Resolved', 'Rejected'];
   
   const selectedStatus = watch('damageStatus');
+  const watchVehicleId = watch('vehicleId');
+  // guard against undefined and ensure we always use an array
+  const selectedVehicle = (vehicles || []).find((v: any) => v.id === watchVehicleId) || null;
 
   // Load vehicles for selection
   useEffect(() => {
-    const loadVehicles = async () => {
+    (async () => {
       try {
-        setLoadingVehicles(true);
-        const response = await vehicleService.getVehicles({}, { page: 1, limit: 1000 });
-        setVehicles(response.data);
-      } catch (error) {
-        console.error('Error loading vehicles:', error);
-        setError('Failed to load vehicles');
-      } finally {
-        setLoadingVehicles(false);
+        // vehicleService.getVehicles is the canonical method — fallback to getAll if needed
+        try {
+          const response = (typeof (vehicleService as any).getVehicles === 'function')
+            ? await (vehicleService as any).getVehicles()
+            : await (vehicleService as any).getAll();
+          const list = response?.vehicles || response?.data || (Array.isArray(response) ? response : []);
+          setVehicles(Array.isArray(list) ? list : []);
+        } catch (err) {
+          console.error('[DamageForm] failed to load vehicles', err);
+          setVehicles([]);
+        }
+      } catch (err) {
+        console.error('[DamageForm] failed to load vehicles', err);
+        setVehicles([]);
       }
-    };
-    
-    loadVehicles();
+    })();
   }, []);
 
   // Load damage record for editing
@@ -220,34 +228,13 @@ const DamageForm: React.FC = () => {
                 <Controller
                   name="vehicleId"
                   control={control}
+                  defaultValue={selectedVehicle?.id ?? ''} // stable default
                   render={({ field }) => (
-                    <Autocomplete
-                      {...field}
-                      options={vehicles}
-                      getOptionLabel={(vehicle) => 
-                        `${vehicle.model?.oem?.name || 'Unknown'} ${vehicle.model?.name || 'Unknown'} ${vehicle.year || ''} - ${vehicle.registrationNumber}`
-                      }
-                      value={vehicles.find(v => v.id === field.value) || null}
-                      onChange={(_, value) => field.onChange(value?.id || '')}
-                      loading={loadingVehicles}
-                      renderInput={(params) => (
-                        <TextField
-                          {...params}
-                          label="Vehicle *"
-                          error={!!errors.vehicleId}
-                          helperText={errors.vehicleId?.message}
-                          InputProps={{
-                            ...params.InputProps,
-                            endAdornment: (
-                              <>
-                                {loadingVehicles ? <CircularProgress color="inherit" size={20} /> : null}
-                                {params.InputProps.endAdornment}
-                              </>
-                            ),
-                          }}
-                        />
-                      )}
-                    />
+                    <TextField select label="Vehicle" {...field}>
+                      {(vehicles || []).map((v: any) => (
+                        <MenuItem key={v.id} value={v.id}>{v.registrationNumber}</MenuItem>
+                      ))}
+                    </TextField>
                   )}
                 />
               </Grid>

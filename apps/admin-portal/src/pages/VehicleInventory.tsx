@@ -268,7 +268,7 @@ const VehicleInventoryPage: React.FC = () => {
 
       console.log('✅ VehicleInventory: Vehicles loaded:', vehiclesResponse);
       console.log('📊 Vehicle data debug:', {
-        totalVehiclesFromAPI: (vehiclesResponse.vehicles || vehiclesResponse.data || []).length,
+        totalVehiclesFromAPI: (vehiclesResponse.vehicles || (vehiclesResponse as any).data || []).length,
         hasMorePages: vehiclesResponse.pagination?.totalPages > 1,
         currentPage: vehiclesResponse.pagination?.currentPage,
         totalPages: vehiclesResponse.pagination?.totalPages,
@@ -276,7 +276,7 @@ const VehicleInventoryPage: React.FC = () => {
       });
 
       // Transform the data to match the frontend interface
-      const transformedVehicles = (vehiclesResponse.vehicles || vehiclesResponse.data || []).map((vehicle: any) => ({
+      const transformedVehicles = (vehiclesResponse.vehicles || (vehiclesResponse as any).data || []).map((vehicle: any) => ({
         ...vehicle,
         make: vehicle.model?.oem?.displayName || vehicle.model?.oem?.name || 'Unknown',
         oem: vehicle.model?.oem?.displayName || vehicle.model?.oem?.name || 'Unknown', // Store OEM name for filtering

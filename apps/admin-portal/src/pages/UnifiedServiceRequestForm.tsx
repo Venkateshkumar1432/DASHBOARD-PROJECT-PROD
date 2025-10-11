@@ -93,6 +93,7 @@ export const UnifiedServiceRequestForm: React.FC<UnifiedServiceRequestFormProps>
   });
   const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
   const [availableParts, setAvailableParts] = useState<any[]>([]);
+  const [selectedParts, setSelectedParts] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -118,25 +119,28 @@ export const UnifiedServiceRequestForm: React.FC<UnifiedServiceRequestFormProps>
   }, [initialData, vehicleId]);
 
   useEffect(() => {
-    // Load available parts from spare parts service
+    const loadAvailableParts = async () => {
+      try {
+        // Use VITE_API_URL and ensure it points to the gateway, not the service directly.
+        const apiBaseUrl = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api').replace(/\/+$/, '');
+        const authToken = localStorage.getItem('authToken') || localStorage.getItem('token') || '';
+        const partsRes = await fetch(`${apiBaseUrl}/v1/spare-parts/parts`, {
+          headers: {
+            'Content-Type': 'application/json',
+            ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+          },
+        });
+        const json = await partsRes.json().catch(() => null);
+        const list = (json?.data || json || []);
+        setAvailableParts(Array.isArray(list) ? list : []);
+      } catch (err) {
+        console.error('Failed to load parts:', err);
+        setAvailableParts([]); // ensure safe fallback
+      }
+    };
+
     loadAvailableParts();
   }, []);
-
-  const loadAvailableParts = async () => {
-    try {
-      const response = await fetch('/api/v1/spare-parts', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
-      if (response.ok) {
-        const parts = await response.json();
-        setAvailableParts(parts);
-      }
-    } catch (error) {
-      console.error('Failed to load parts:', error);
-    }
-  };
 
   const handleInputChange = (field: keyof ServiceRequest, value: any) => {
     setFormData(prev => ({
@@ -151,6 +155,15 @@ export const UnifiedServiceRequestForm: React.FC<UnifiedServiceRequestFormProps>
       ...prev,
       symptoms,
     }));
+  };
+
+  const handleAddPart = (part: any) => {
+    try {
+      if (!part) return;
+      setSelectedParts(prev => Array.isArray(prev) ? [...prev, part] : [part]);
+    } catch (err) {
+      console.error('Error adding part:', err);
+    }
   };
 
   const addPart = (part: any) => {
@@ -208,15 +221,17 @@ export const UnifiedServiceRequestForm: React.FC<UnifiedServiceRequestFormProps>
     setError(null);
 
     try {
+      const apiBaseUrl = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api').replace(/\/+$/, '');
       const endpoint = initialData?.id
-        ? `/api/v1/unified-service/requests/${initialData.id}`
-        : '/api/v1/unified-service/requests';
+        ? `${apiBaseUrl}/v1/unified-service/requests/${initialData.id}`
+        : `${apiBaseUrl}/v1/unified-service/requests`;
 
       const method = initialData?.id ? 'PUT' : 'POST';
 
-      const response = await fetch(endpoint, {
+      const response = await fetch(endpoint, { // Use the absolute URL
         method,
-        headers: {
+        headers:
+         {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
         },

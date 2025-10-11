@@ -40,8 +40,9 @@ import {
   Visibility as VisibilityIcon,
   CheckCircle as CheckCircleIcon,
   Add as AddIcon,
-} from '@mui/icons-material';
-import { riderService, Rider, RiderKYCSubmission } from '../services';
+} from '@mui/icons-material'
+import { riderService, Rider } from '../services'
+import { type RiderKYCSubmission } from '../services/riderService'
 import vehicleHistoryService from '../services/vehicleHistoryService';
 import riderOrderService from '../services/riderOrderService';
 import EnhancedRiderForm from '../components/EnhancedRiderForm';
@@ -211,7 +212,7 @@ const RiderDetail: React.FC = () => {
     if (!riderId) return;
 
     try {
-      const response = await riderService.submitKYC(riderId, kycData);
+      const response = await riderService.submitKYC(riderId, kycData as any);
       if (response.success) {
         // Show success message
         enqueueSnackbar('KYC document uploaded successfully', { variant: 'success' });
@@ -889,7 +890,7 @@ const RiderDetail: React.FC = () => {
       <KycDocumentUpload
         open={uploadDocumentDialogOpen}
         onClose={() => setUploadDocumentDialogOpen(false)}
-        onSubmit={handleKycDocumentUpload}
+        onSubmit={(data: any) => handleKycDocumentUpload(data as any)}
       />
 
       {/* Document Preview Dialog */}

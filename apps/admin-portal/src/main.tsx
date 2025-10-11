@@ -5,6 +5,9 @@ import { QueryClient, QueryClientProvider } from 'react-query'
 import { ThemeProvider } from '@mui/material/styles'
 import { CssBaseline } from '@mui/material'
 import { SnackbarProvider } from 'notistack'
+import { LocalizationProvider } from '@mui/x-date-pickers'
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns'
+import { SnackbarProvider as CustomSnackbarProvider } from './contexts/SnackbarContext'
 import App from './App'
 import theme from './theme'
 import { AuthProvider } from './contexts/AuthContext'
@@ -24,11 +27,15 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
       <QueryClientProvider client={queryClient}>
         <ThemeProvider theme={theme}>
           <CssBaseline />
-          <SnackbarProvider maxSnack={3}>
-            <AuthProvider>
-              <App />
-            </AuthProvider>
-          </SnackbarProvider>
+          <LocalizationProvider dateAdapter={AdapterDateFns}>
+            <SnackbarProvider maxSnack={3}>
+              <AuthProvider>
+                <CustomSnackbarProvider>
+                  <App />
+                </CustomSnackbarProvider>
+              </AuthProvider>
+            </SnackbarProvider>
+          </LocalizationProvider>
         </ThemeProvider>
       </QueryClientProvider>
     </BrowserRouter>

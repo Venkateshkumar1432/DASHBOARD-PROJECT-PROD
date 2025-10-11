@@ -100,7 +100,7 @@ const OrderDetail: React.FC = () => {
 
       if (response.success && response.data) {
         setOrder(response.data as Order);
-
+        
         // Load status history
         const historyResponse = await orderService.getOrderStatusHistory(id);
         if (historyResponse.success && historyResponse.data) {

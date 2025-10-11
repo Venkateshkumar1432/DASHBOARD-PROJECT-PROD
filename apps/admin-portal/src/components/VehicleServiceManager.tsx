@@ -218,7 +218,7 @@ const VehicleServiceManager: React.FC<VehicleServiceManagerProps> = ({
 
   const fetchVehicles = async () => {
     try {
-      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+      const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
       const authToken = localStorage.getItem('authToken');
 
       console.log('🔍 Service Management - Vehicles API Base URL:', apiBaseUrl);
@@ -341,7 +341,7 @@ const VehicleServiceManager: React.FC<VehicleServiceManagerProps> = ({
     setLoading(true);
     try {
       // Fetch service records via API Gateway
-      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+      const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
       const authToken = localStorage.getItem('authToken');
 
       console.log('🔍 Service Management - API Base URL:', apiBaseUrl);
@@ -460,7 +460,7 @@ const VehicleServiceManager: React.FC<VehicleServiceManagerProps> = ({
 
   const handleScheduleService = async () => {
     try {
-      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+      const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
       const authToken = localStorage.getItem('authToken');
 
       console.log('🔍 Service Management - Schedule API Base URL:', apiBaseUrl);
@@ -543,7 +543,7 @@ const VehicleServiceManager: React.FC<VehicleServiceManagerProps> = ({
 
   const handleUpdateServiceStatus = async (serviceId: string, status: string) => {
     try {
-      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+      const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
       const authToken = localStorage.getItem('authToken');
 
       console.log('🔍 Service Management - Update Status API Base URL:', apiBaseUrl);

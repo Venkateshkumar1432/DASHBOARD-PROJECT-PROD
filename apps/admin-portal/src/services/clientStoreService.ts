@@ -941,6 +941,33 @@ export const getCoordinatesFromAddress = async (
   }
 };
 
+/**
+ * Get list of account managers (for dropdowns)
+ */
+export const getAccountManagers = async (): Promise<{
+  success: boolean;
+  data: any[];
+}> => {
+  try {
+    // try expected endpoint first
+    const response = await api.get("/clients/account-managers", { validateStatus: () => true });
+
+    if (response.status === 404) {
+      // fallback: try alternate endpoint if API differs
+      const altResp = await api.get("/account-managers", { validateStatus: () => true });
+      if (altResp.status >= 200 && altResp.status < 300) {
+        return altResp.data || { success: true, data: [] };
+      }
+      return { success: true, data: [] };
+    }
+
+    return response.data || { success: true, data: [] };
+  } catch (error) {
+    console.error("Error fetching account managers:", error);
+    return { success: true, data: [] };
+  }
+};
+
 export default {
   getClients,
   getClientById,
@@ -960,4 +987,5 @@ export default {
   updateStore,
   deleteStore,
   getCoordinatesFromAddress,
+  getAccountManagers,
 };

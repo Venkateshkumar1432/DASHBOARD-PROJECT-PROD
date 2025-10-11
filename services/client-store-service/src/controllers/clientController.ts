@@ -83,13 +83,15 @@ export const createClient = asyncHandler(
     }
 
     // Validate account manager if provided
-    if (accountManagerId) {
+    let validAccountManagerId: string | null = null;
+    if (accountManagerId && accountManagerId !== "") {
       const accountManager = await prisma.user.findUnique({
         where: { id: accountManagerId },
       });
       if (!accountManager) {
         throw createError("Account manager not found", 404, "USER_NOT_FOUND");
       }
+      validAccountManagerId = accountManagerId;
     }
 
     // Check if client already exists
@@ -112,7 +114,7 @@ export const createClient = asyncHandler(
         clientCode,
         name,
         email,
-        accountManagerId,
+        accountManagerId: validAccountManagerId,
         clientType,
         city,
       });
@@ -122,68 +124,52 @@ export const createClient = asyncHandler(
           clientCode,
           clientType,
           name,
-          primaryContactPerson,
-          designation,
-          email,
-          secondaryEmail,
-          phone,
-          secondaryPhone,
-          city,
-          state,
-          pinCode,
-          registrationNumber,
-          panNumber,
-          gstNumber,
-          industrySector,
-          businessCategory,
-          evPortfolio,
+          primaryContactPerson: primaryContactPerson || null,
+          designation: designation || null,
+          email: email || null,
+          secondaryEmail: secondaryEmail || null,
+          phone: phone || null,
+          secondaryPhone: secondaryPhone || null,
+          city: city || null,
+          state: state || null,
+          pinCode: pinCode || null,
+          registrationNumber: registrationNumber || null,
+          panNumber: panNumber || null,
+          gstNumber: gstNumber || null,
+          industrySector: industrySector || null,
+          businessCategory: businessCategory || null,
+          evPortfolio: evPortfolio || null,
           fleetSize: fleetSize ? parseInt(fleetSize.toString()) : null,
           hasChargingInfra: hasChargingInfra || false,
-          chargingInfraDetails,
-          batteryTechPreference,
-          serviceRequirements,
-          paymentTerms,
-          preferredPaymentMethod,
-          taxCategory,
-          discountCategory,
+          chargingInfraDetails: chargingInfraDetails || null,
+          batteryTechPreference: batteryTechPreference || null,
+          serviceRequirements: serviceRequirements || null,
+          paymentTerms: paymentTerms || null,
+          preferredPaymentMethod: preferredPaymentMethod || null,
+          taxCategory: taxCategory || null,
+          discountCategory: discountCategory || null,
           baseOrderRate: parseFloat(baseOrderRate.toString()),
-          rateEffectiveDate: rateEffectiveDate
-            ? new Date(rateEffectiveDate)
-            : new Date(),
+          rateEffectiveDate: rateEffectiveDate ? new Date(rateEffectiveDate) : new Date(),
           rateType: rateType || "fixed",
           minimumRate: minimumRate ? parseFloat(minimumRate.toString()) : 15.0,
           maximumRate: maximumRate ? parseFloat(maximumRate.toString()) : 50.0,
           bulkBonusEnabled: bulkBonusEnabled || false,
-          bulkOrdersThreshold: bulkOrdersThreshold
-            ? parseInt(bulkOrdersThreshold.toString())
-            : 10,
-          bulkBonusAmount: bulkBonusAmount
-            ? parseFloat(bulkBonusAmount.toString())
-            : 0.0,
+          bulkOrdersThreshold: bulkOrdersThreshold ? parseInt(bulkOrdersThreshold.toString()) : 10,
+          bulkBonusAmount: bulkBonusAmount ? parseFloat(bulkBonusAmount.toString()) : 0.0,
           bulkResetPeriod: bulkResetPeriod || "daily",
           weeklyBonusEnabled: weeklyBonusEnabled || false,
-          weeklyOrderTarget: weeklyOrderTarget
-            ? parseInt(weeklyOrderTarget.toString())
-            : 0,
-          weeklyBonusAmount: weeklyBonusAmount
-            ? parseFloat(weeklyBonusAmount.toString())
-            : 0.0,
+          weeklyOrderTarget: weeklyOrderTarget ? parseInt(weeklyOrderTarget.toString()) : 0,
+          weeklyBonusAmount: weeklyBonusAmount ? parseFloat(weeklyBonusAmount.toString()) : 0.0,
           performanceMultiplierEnabled: performanceMultiplierEnabled || false,
-          topPerformerRate: topPerformerRate
-            ? parseFloat(topPerformerRate.toString())
-            : 1.2,
+          topPerformerRate: topPerformerRate ? parseFloat(topPerformerRate.toString()) : 1.2,
           performanceCriteria: performanceCriteria || "rating",
           paymentCycle: paymentCycle || "weekly",
-          paymentMethods,
-          minimumPayout: minimumPayout
-            ? parseFloat(minimumPayout.toString())
-            : 100.0,
+          paymentMethods: paymentMethods || null,
+          minimumPayout: minimumPayout ? parseFloat(minimumPayout.toString()) : 100.0,
           payoutDay: payoutDay || "Friday",
           clientStatus: clientStatus || "Active",
-          acquisitionDate: acquisitionDate
-            ? new Date(acquisitionDate)
-            : new Date(),
-          accountManagerId,
+          acquisitionDate: acquisitionDate ? new Date(acquisitionDate) : new Date(),
+          accountManagerId: validAccountManagerId,
           clientPriority: clientPriority || "Medium",
           relationshipType: relationshipType || "Direct",
           createdAt: new Date(),
@@ -226,6 +212,7 @@ export const createClient = asyncHandler(
     }
   }
 );
+
 
 // Get all clients with filtering
 export const getClients = asyncHandler(async (req: Request, res: Response) => {

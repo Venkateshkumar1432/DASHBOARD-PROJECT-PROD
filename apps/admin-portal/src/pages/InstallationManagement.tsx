@@ -55,6 +55,7 @@ import {
   Done as DoneIcon,
   AccessTime as AccessTimeIcon,
 } from '@mui/icons-material';
+import SpeedIcon from '@mui/icons-material/Speed';
 import { useNavigate } from 'react-router-dom';
 import { outwardFlowService, InstalledPart, SparePartRequest } from '../services/outwardFlowService';
 
@@ -228,11 +229,14 @@ const InstallationManagement: React.FC = () => {
     setEditDialogOpen(true);
     setInstallationData({
       unitCost: installation.unitCost.toString(),
-      serviceCost: installation.serviceCost?.toString() || '',
-      laborCost: installation.laborCost?.toString() || '',
+      serviceCost: installation.serviceCost?.toString() || '0',
+      laborCost: installation.laborCost?.toString() || '0',
+      warrantyMonths: (installation as any).warrantyMonths?.toString() || '0',
+      technicianId: (installation as any).technicianId || '',
+      technicianName: (installation as any).technicianName || '',
       notes: installation.notes || '',
-      mileageAtInstallation: installation.mileageAtInstallation?.toString() || '',
-      installationDate: installation.installedAt.split('T')[0],
+      mileageAtInstallation: installation.mileageAtInstallation?.toString() || '0',
+      installationDate: installation.installedAt?.split('T')[0] || '',
     });
   };
 
@@ -252,8 +256,6 @@ const InstallationManagement: React.FC = () => {
         warrantyMonths: parseInt(installationData.warrantyMonths) || undefined,
         notes: installationData.notes,
         mileageAtInstallation: parseInt(installationData.mileageAtInstallation) || undefined,
-        technicianId: installationData.technicianId || undefined,
-        technicianName: installationData.technicianName || undefined,
         installationDate: installationData.installationDate,
       });
 
@@ -275,9 +277,9 @@ const InstallationManagement: React.FC = () => {
     try {
       const response = await outwardFlowService.installations.update(selectedInstallation.id, {
         notes: installationData.notes || undefined,
-        warrantyStartDate: installationData.warrantyStartDate || undefined,
-        warrantyEndDate: installationData.warrantyEndDate || undefined,
-        nextServiceMileage: parseInt(installationData.nextServiceMileage) || undefined,
+        warrantyStartDate: (installationData as any).warrantyStartDate || undefined,
+        warrantyEndDate: (installationData as any).warrantyEndDate || undefined,
+        nextServiceMileage: parseInt((installationData as any).nextServiceMileage || '0') || undefined,
       });
 
       if (response.success) {
@@ -550,7 +552,7 @@ const InstallationManagement: React.FC = () => {
                       </TableCell>
                       <TableCell>
                         <Typography variant="body2">
-                          {installation.serviceRequest?.requestNumber || installation.serviceRequestId}
+                          {installation.serviceRequest?.requestNumber || installation.serviceRequest?.requestNumber}
                         </Typography>
                       </TableCell>
                       <TableCell>
@@ -566,10 +568,10 @@ const InstallationManagement: React.FC = () => {
                       <TableCell>
                         <Box display="flex" alignItems="center" gap={1}>
                           <Avatar sx={{ width: 24, height: 24, fontSize: 12 }}>
-                            {(installation.technicianName || 'U')[0].toUpperCase()}
+                            {(installation as any).technicianName || 'U'[0].toUpperCase()}
                           </Avatar>
                           <Typography variant="body2">
-                            {installation.technicianName || 'Unknown'}
+                            {(installation as any).technicianName || 'Unknown'}
                           </Typography>
                         </Box>
                       </TableCell>
@@ -582,11 +584,11 @@ const InstallationManagement: React.FC = () => {
                         </Typography>
                       </TableCell>
                       <TableCell>
-                        {installation.warrantyMonths ? (
+                        {(installation as any).warrantyMonths ? (
                           <Box display="flex" alignItems="center" gap={0.5}>
                             <SecurityIcon fontSize="small" color="primary" />
                             <Typography variant="body2">
-                              {installation.warrantyMonths}m
+                              {(installation as any).warrantyMonths}m
                             </Typography>
                           </Box>
                         ) : (
@@ -899,7 +901,7 @@ const InstallationManagement: React.FC = () => {
                       </ListItemIcon>
                       <ListItemText
                         primary="Technician"
-                        secondary={selectedInstallation.technicianName || 'Not specified'}
+                        secondary={(selectedInstallation as any).technicianName || 'Not specified'}
                       />
                     </ListItem>
                     <ListItem>
@@ -975,19 +977,19 @@ const InstallationManagement: React.FC = () => {
                   </Paper>
                 </Grid>
               )}
-              {selectedInstallation.warrantyMonths && (
+              {(selectedInstallation as any).warrantyMonths && (
                 <Grid item xs={12}>
                   <Paper sx={{ p: 2 }}>
                     <Box display="flex" alignItems="center" gap={2}>
                       <SecurityIcon color="primary" />
                       <Box>
                         <Typography variant="h6">
-                          {selectedInstallation.warrantyMonths} Months Warranty
+                          {(selectedInstallation as any).warrantyMonths} Months Warranty
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
                           Valid until: {new Date(
                             new Date(selectedInstallation.installedAt).getTime() +
-                            selectedInstallation.warrantyMonths * 30 * 24 * 60 * 60 * 1000
+                            (selectedInstallation as any).warrantyMonths * 30 * 24 * 60 * 60 * 1000
                           ).toLocaleDateString()}
                         </Typography>
                       </Box>

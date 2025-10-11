@@ -389,7 +389,7 @@ export const vehicleService = {
       if (!token) {
         console.warn("No auth token available for getVehicles");
         return {
-          data: [],
+          vehicles: [],
           pagination: {
             totalItems: 0,
             totalPages: 0,
@@ -485,7 +485,7 @@ export const vehicleService = {
         );
         // Return empty but structured data instead of throwing
         return {
-          data: [],
+          vehicles: [],
           pagination: {
             totalItems: 0,
             totalPages: 0,

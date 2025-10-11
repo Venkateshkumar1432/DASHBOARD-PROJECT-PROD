@@ -1,0 +1,5 @@
+// Add these routes to your main router file
+import payoutRoutes from './routes/payoutRoutes';
+
+// Add this line where you set up your routes
+app.use('/api/payouts', payoutRoutes);

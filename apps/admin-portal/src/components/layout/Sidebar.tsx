@@ -202,16 +202,6 @@ const menuItems: MenuItem[] = [
         }
       },
       {
-        text: 'Unified Service Management',
-        icon: <UnifiedServiceIcon />,
-        path: '/unified-service',
-        anyOfPermissions: [
-          { service: 'vehicle', resource: 'maintenance', action: 'read' },
-          { service: 'spare-parts', resource: 'service-requests', action: 'read' },
-          { service: 'vehicle', resource: 'service-requests', action: 'read' }
-        ]
-      },
-      {
         text: 'Damage Management',
         icon: <DamageIcon />,
         path: '/damage',
@@ -558,6 +548,22 @@ const menuItems: MenuItem[] = [
   },
 ]
 
+// add helper to remove unwanted menu entries (Outward Flow, Order Management)
+const removeMenuByText = (items: MenuItem[], removeTexts: string[]): MenuItem[] => {
+  return items
+    .filter(i => !removeTexts.includes(i.text))
+    .map(i => {
+      const copy = { ...i }
+      if (copy.children) {
+        copy.children = removeMenuByText(copy.children, removeTexts)
+      }
+      return copy
+    })
+}
+
+// remove the two entries globally before permission check
+const cleanedMenuItems = removeMenuByText(menuItems, ['Outward Flow', 'Order Management'])
+
 export default function Sidebar({ open, onClose }: SidebarProps) {
   const location = useLocation()
   const theme = useTheme()
@@ -645,7 +651,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
       })
   }
 
-  const filteredMenuItems = filterMenuItems(menuItems)
+  const filteredMenuItems = filterMenuItems(cleanedMenuItems)
 
   console.log(`🐛 Sidebar Debug - Filtered menu items (${filteredMenuItems.length}):`, filteredMenuItems.map(item => item.text))
 

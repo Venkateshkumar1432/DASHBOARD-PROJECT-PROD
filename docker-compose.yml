@@ -1,0 +1,85 @@
+version: '3.9'
+
+services:
+  admin-portal:
+    build: ./apps/admin-portal
+    container_name: admin-portal
+    env_file:
+      - ./apps/admin-portal/.env
+    networks:
+      - ev91-network
+    depends_on:
+      - api-gateway
+
+  api-gateway:
+    build: ./apps/api-gateway
+    container_name: api-gateway
+    env_file:
+      - ./apps/api-gateway/.env
+    networks:
+      - ev91-network
+    depends_on:
+      - auth-service
+      - client-store-service
+      - vehicle-service
+      - rider-service
+      - spare-parts-service
+
+  auth-service:
+    build: ./services/auth-service
+    container_name: auth-service
+    env_file:
+      - ./services/auth-service/.env
+    networks:
+      - ev91-network
+
+  client-store-service:
+    build: ./services/client-store-service
+    container_name: client-store-service
+    env_file:
+      - ./services/client-store-service/.env
+    networks:
+      - ev91-network
+
+  spare-parts-service:
+    build: ./services/spare-parts-service
+    container_name: spare-parts-service
+    env_file:
+      - ./services/spare-parts-service/.env
+    networks:
+      - ev91-network
+
+  vehicle-service:
+    build: ./services/vehicle-service
+    container_name: vehicle-service
+    env_file:
+      - ./services/vehicle-service/.env
+    networks:
+      - ev91-network
+
+  rider-service:
+    build: ./services/rider-service
+    container_name: rider-service
+    env_file:
+      - ./services/rider-service/.env
+    networks:
+      - ev91-network
+
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    volumes:
+      - /home/ubuntu/microservices/nginx.conf:/etc/nginx/conf.d/default.conf
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - admin-portal
+      - api-gateway
+    networks:
+      - ev91-network
+
+
+networks:
+  ev91-network:
+    driver: bridge

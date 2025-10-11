@@ -87,9 +87,12 @@ const UnifiedServiceDashboard: React.FC = () => {
   const loadServiceRequests = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/v1/unified-service/requests', {
+      const apiBaseUrl = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api').replace(/\/+$/, '');
+      const authToken = localStorage.getItem('authToken') || localStorage.getItem('token') || '';
+
+      const response = await fetch(`${apiBaseUrl}/v1/unified-service/requests`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${authToken}`,
         },
       });
 
@@ -147,11 +150,14 @@ const UnifiedServiceDashboard: React.FC = () => {
 
   const handleApproval = async (requestId: string, action: 'approve' | 'reject') => {
     try {
-      const response = await fetch(`/api/v1/unified-service/requests/${requestId}/approval`, {
+      const apiBaseUrl = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api').replace(/\/+$/, '');
+      const authToken = localStorage.getItem('authToken') || localStorage.getItem('token') || '';
+
+      const response = await fetch(`${apiBaseUrl}/v1/unified-service/requests/${requestId}/approval`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${authToken}`,
         },
         body: JSON.stringify({ action }),
       });

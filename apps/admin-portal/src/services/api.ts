@@ -38,13 +38,24 @@ class ApiService {
     // Add auth token interceptor to both instances
     const addAuthToken = (config: any) => {
       const token = localStorage.getItem("authToken");
+      config.headers = config.headers || {};
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
+      } else {
+        // helpful debug: warn when no token
+        console.warn('[api] no authToken in localStorage for request to', config.url);
       }
+      // debug every outgoing request (method, url, hasToken)
+      console.debug('[api] request', config.method?.toUpperCase(), config.url, 'hasToken=', !!token);
       return config;
     };
-
+    
     const handleAuthError = (error: any) => {
+      console.error('[api] response error', {
+        status: error.response?.status,
+        url: error.config?.url,
+        data: error.response?.data
+      });
       // Only handle 401 errors more carefully
       if (error.response?.status === 401) {
         console.warn(
