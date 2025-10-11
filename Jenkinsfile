@@ -14,31 +14,32 @@ pipeline {
             }
         }
 
-       stage('Inject Env Files') {
-    steps {
-        script {
-            def envFiles = [
-                "apps/admin-portal"           : "admin-portal-env",
-                "apps/api-gateway"            : "api-gateway-env",
-                "services/auth-service"       : "auth-service-env",
-                "services/client-store-service": "client-store-service-env",
-                "services/rider-service"      : "rider-service-env",
-                "services/spare-parts-service": "spare-parts-service-env",
-                "services/vehicle-service"    : "vehicle-service-env"
-            ]
+//     stage('Inject Env Files') {
+//     steps {
+//         script {
+//             def envFiles = [
+//                 "apps/admin-portal"           : "admin-portal-env",
+//                 "apps/api-gateway"            : "api-gateway-env",
+//                 "services/auth-service"       : "auth-service-env",
+//                 "services/client-store-service": "client-store-service-env",
+//                 "services/rider-service"      : "rider-service-env",
+//                 "services/spare-parts-service": "spare-parts-service-env",
+//                 "services/vehicle-service"    : "vehicle-service-env"
+//             ]
 
-            envFiles.each { folder, credId ->
-                withCredentials([file(credentialsId: credId, variable: 'ENV_FILE')]) {
-                    sh """
-                        mkdir -p ${DEPLOY_DIR}/${folder}
-                        cp $ENV_FILE ${DEPLOY_DIR}/${folder}/.env
-                        chmod 600 ${DEPLOY_DIR}/${folder}/.env
-                    """
-                }
-            }
-        }
-    }
-}
+//             envFiles.each { folder, credId ->
+//                 withCredentials([file(credentialsId: credId, variable: 'ENV_FILE')]) {
+//                     sh """
+//                         mkdir -p ${DEPLOY_DIR}/${folder}
+//                         cp $ENV_FILE ${DEPLOY_DIR}/${folder}/.env
+//                         chmod 600 ${DEPLOY_DIR}/${folder}/.env
+//                         ls -l ${DEPLOY_DIR}/${folder}/
+//                     """
+//                 }
+//             }
+//         }
+//     }
+// }
 
         stage('Update Changed Services Only') {
             steps {
