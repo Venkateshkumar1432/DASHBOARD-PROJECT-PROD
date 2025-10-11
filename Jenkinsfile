@@ -83,10 +83,41 @@ pipeline {
             }
         }
         
-        stage('Cleanup Jenkins Workspace') {
+        // stage('Cleanup Jenkins Workspace') {
+        //     steps {
+        //         echo "Cleaning Jenkins workspace..."
+        //         cleanWs()  // Automatically cleans everything in Jenkins job workspace
+        //     }
+        // }
+        
+        stage('Sync All Service/App Files') {
             steps {
-                echo "Cleaning Jenkins workspace..."
-                cleanWs()  // Automatically cleans everything in Jenkins job workspace
+                script {
+                    def allFolders = [
+                        "apps/admin-portal",
+                        "apps/api-gateway",
+                        "services/auth-service",
+                        "services/client-store-service",
+                        "services/rider-service",
+                        "services/spare-parts-service",
+                        "services/vehicle-service"
+                    ]
+                    allFolders.each { folder ->
+                        sh """
+                            mkdir -p ${DEPLOY_DIR}/${folder}
+                            rsync -av --delete ${WORKSPACE}/${folder}/ ${DEPLOY_DIR}/${folder}/
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Copy Root Files') {
+            steps {
+                sh """
+                    cp ${WORKSPACE}/docker-compose.yml ${DEPLOY_DIR}/
+                    cp ${WORKSPACE}/nginx.conf ${DEPLOY_DIR}/
+                """
             }
         }
     }
