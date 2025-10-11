@@ -30,9 +30,9 @@ pipeline {
             envFiles.each { folder, credId ->
                 withCredentials([file(credentialsId: credId, variable: 'ENV_FILE')]) {
                     sh """
-                        mkdir -p '${DEPLOY_DIR}/${folder}'
-                        cp '\$ENV_FILE' '${DEPLOY_DIR}/${folder}/.env'
-                        chmod 600 '${DEPLOY_DIR}/${folder}/.env'
+                        mkdir -p ${DEPLOY_DIR}/${folder}
+                        cp $ENV_FILE ${DEPLOY_DIR}/${folder}/.env
+                        chmod 600 ${DEPLOY_DIR}/${folder}/.env
                     """
                 }
             }
