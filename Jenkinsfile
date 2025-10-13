@@ -3,53 +3,55 @@ pipeline {
 
     environment {
         DEPLOY_DIR = "/home/ubuntu/microservices"
-        EC2_HOST = "3.111.37.229"
+        EC2_HOST = "43.204.218.253"
         EC2_USER = "ubuntu"
     }
 
     stages {
-        stage('Checkout') {
+
+        stage('Checkout Code') {
             steps {
+                echo "📥 Cloning repository..."
                 checkout scm
             }
         }
 
-    stage('Inject .env files') {
-      steps {
-        // 🔑 Ensure Jenkins has ownership + write permission on all files in workspace
-        sh '''
-            sudo chown -R jenkins:jenkins ${WORKSPACE}
-            sudo chmod -R 775 ${WORKSPACE}
-        '''
-        // Example for one service; repeat for each service with its credential id
-        withCredentials([file(credentialsId: 'auth-service-env-file', variable: 'AUTH_ENV')]) {
-          sh 'cp $AUTH_ENV services/auth-service/.env'
+        stage('Inject .env Files') {
+            steps {
+                echo "🔑 Injecting environment files..."
+                sh '''
+                    sudo chown -R jenkins:jenkins ${WORKSPACE}
+                    sudo chmod -R 775 ${WORKSPACE}
+                '''
+                withCredentials([file(credentialsId: 'auth-service-env-file', variable: 'AUTH_ENV')]) {
+                    sh 'cp $AUTH_ENV services/auth-service/.env'
+                }
+                withCredentials([file(credentialsId: 'api-gateway-env-file', variable: 'GATEWAY_ENV')]) {
+                    sh 'cp $GATEWAY_ENV apps/api-gateway/.env'
+                }
+                withCredentials([file(credentialsId: 'admin-portal-env-file', variable: 'ADMIN_ENV')]) {
+                    sh 'cp $ADMIN_ENV apps/admin-portal/.env'
+                }
+                withCredentials([file(credentialsId: 'client-store-service-env-file', variable: 'CLIENT_ENV')]) {
+                    sh 'cp $CLIENT_ENV services/client-store-service/.env'
+                }
+                withCredentials([file(credentialsId: 'rider-service-env-file', variable: 'RIDER_ENV')]) {
+                    sh 'cp $RIDER_ENV services/rider-service/.env'
+                }
+                withCredentials([file(credentialsId: 'vehicle-service-env-file', variable: 'VEHICLE_ENV')]) {
+                    sh 'cp $VEHICLE_ENV services/vehicle-service/.env'
+                }
+                withCredentials([file(credentialsId: 'spare-parts-service-env-file', variable: 'SPARE_ENV')]) {
+                    sh 'cp $SPARE_ENV services/spare-parts-service/.env'
+                }
+            }
         }
-        withCredentials([file(credentialsId: 'api-gateway-env-file', variable: 'GATEWAY_ENV')]) {
-          sh 'cp $GATEWAY_ENV api-gateway/.env'
-        }
-        withCredentials([file(credentialsId: 'admin-portal-env-file', variable: 'ADMIN_ENV')]) {
-          sh 'cp $ADMIN_ENV admin-portal/.env'
-        }
-        withCredentials([file(credentialsId: 'client-store-service-env-file', variable: 'CLIENT_ENV')]) {
-          sh 'cp $CLIENT_ENV services/client-store-service/.env'
-        }   
-        withCredentials([file(credentialsId: 'rider-service-env-file', variable: 'RIDER_ENV')]) {
-          sh 'cp $RIDER_ENV services/rider-service/.env'
-        }
-        withCredentials([file(credentialsId: 'vehicle-service-env-file', variable: 'VEHICLE_ENV')]) {
-          sh 'cp $VEHICLE_ENV services/vehicle-service/.env'
-        }
-        withCredentials([file(credentialsId: 'spare-parts-service-env-file', variable: 'SPARE_ENV')]) {
-          sh 'cp $SPARE_ENV services/spare-parts-service/.env'
-        }
-      }
-    }
-    
 
-    stage('Update Changed Services Only') {
+        stage('Deploy to EC2') {
             steps {
                 script {
+                    echo "🚀 Determining changed folders..."
+
                     def commitCount = sh(
                         script: "git rev-list --count HEAD",
                         returnStdout: true
@@ -62,7 +64,7 @@ pipeline {
                             returnStdout: true
                         ).trim().split("\n")
                     } else {
-                        echo "🚀 First build detected – syncing all folders"
+                        echo "🆕 First build detected – deploying everything"
                         changedFiles = sh(
                             script: "git ls-tree --name-only -r HEAD",
                             returnStdout: true
@@ -72,60 +74,42 @@ pipeline {
                     def changedFolders = [] as Set
                     for (file in changedFiles) {
                         if (file.contains("/")) {
-                            def folder = file.split("/")[0]   // e.g., Admin-portal or service
+                            def folder = file.split("/")[0..1].join("/")
                             changedFolders.add(folder)
                         }
                     }
 
-                    echo "📂 Updated folders: ${changedFolders}"
-
-                    for (folder in changedFolders) {
-                        echo "🔄 Updating folder: ${folder}"
+                    if (commitCount <= 1 || changedFolders.isEmpty()) {
+                        echo "🌍 Performing full initial deployment..."
                         sh """
-                            mkdir -p ${DEPLOY_DIR}/${folder}
-                            rsync -av --delete ${WORKSPACE}/${folder}/ ${DEPLOY_DIR}/${folder}/
+                            rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" ${WORKSPACE}/ ${EC2_USER}@${EC2_HOST}:${DEPLOY_DIR}/
                         """
-                    }
-                }
-            }
-        }
-        
-        
-        stage('Sync All Service/App Files') {
-            steps {
-                script {
-                    def allFolders = [
-                        "apps/admin-portal",
-                        "apps/api-gateway",
-                        "services/auth-service",
-                        "services/client-store-service",
-                        "services/rider-service",
-                        "services/spare-parts-service",
-                        "services/vehicle-service"
-                    ]
-                    allFolders.each { folder ->
-                        sh """
-                            mkdir -p ${DEPLOY_DIR}/${folder}
-                            rsync -av --delete ${WORKSPACE}/${folder}/ ${DEPLOY_DIR}/${folder}/
-                        """
+                    } else {
+                        echo "📦 Changed folders detected: ${changedFolders}"
+                        for (folder in changedFolders) {
+                            echo "🔄 Updating folder: ${folder}"
+                            sh """
+                                rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" ${WORKSPACE}/${folder}/ ${EC2_USER}@${EC2_HOST}:${DEPLOY_DIR}/${folder}/
+                            """
+                        }
                     }
                 }
             }
         }
 
-        stage('Copy Root Files') {
+        stage('Post-Deployment Check') {
             steps {
+                echo "✅ Verifying files on EC2..."
                 sh """
-                    cp ${WORKSPACE}/docker-compose.yml ${DEPLOY_DIR}/
-                    cp ${WORKSPACE}/nginx.conf ${DEPLOY_DIR}/
+                    ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} "ls -l ${DEPLOY_DIR}"
                 """
             }
         }
 
         stage('Cleanup Jenkins Workspace') {
             steps {
-                echo "Cleaning Jenkins workspace..."
-                cleanWs()  // Automatically cleans everything in Jenkins job workspace
+                echo "🧹 Cleaning up workspace..."
+                cleanWs()
             }
         }
     }
