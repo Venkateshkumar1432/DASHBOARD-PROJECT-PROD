@@ -79,18 +79,21 @@ pipeline {
                         }
                     }
 
-                    if (commitCount <= 1 || changedFolders.isEmpty()) {
-                        echo "🌍 Performing full initial deployment..."
-                        sh """
-                            rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" ${WORKSPACE}/ ${EC2_USER}@${EC2_HOST}:${DEPLOY_DIR}/
-                        """
-                    } else {
-                        echo "📦 Changed folders detected: ${changedFolders}"
-                        for (folder in changedFolders) {
-                            echo "🔄 Updating folder: ${folder}"
+                    // 🔑 Use SSH key stored in Jenkins
+                    sshagent(['EC2_SSH_KEY']) {
+                        if (commitCount <= 1 || changedFolders.isEmpty()) {
+                            echo "🌍 Performing full initial deployment..."
                             sh """
-                                rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" ${WORKSPACE}/${folder}/ ${EC2_USER}@${EC2_HOST}:${DEPLOY_DIR}/${folder}/
+                                rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" ${WORKSPACE}/ ${EC2_USER}@${EC2_HOST}:${DEPLOY_DIR}/
                             """
+                        } else {
+                            echo "📦 Changed folders detected: ${changedFolders}"
+                            for (folder in changedFolders) {
+                                echo "🔄 Updating folder: ${folder}"
+                                sh """
+                                    rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" ${WORKSPACE}/${folder}/ ${EC2_USER}@${EC2_HOST}:${DEPLOY_DIR}/${folder}/
+                                """
+                            }
                         }
                     }
                 }
@@ -100,9 +103,11 @@ pipeline {
         stage('Post-Deployment Check') {
             steps {
                 echo "✅ Verifying files on EC2..."
-                sh """
-                    ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} "ls -l ${DEPLOY_DIR}"
-                """
+                sshagent(['EC2_SSH_KEY']) {
+                    sh """
+                        ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} "ls -l ${DEPLOY_DIR}"
+                    """
+                }
             }
         }
 
