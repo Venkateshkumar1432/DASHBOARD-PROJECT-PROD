@@ -18,8 +18,11 @@ class ApiService {
 
   constructor() {
     // Main API for general endpoints
+    // Support both VITE_API_BASE_URL and VITE_API_URL environment variables
+    const baseUrl = (import.meta.env as any).VITE_API_BASE_URL || (import.meta.env as any).VITE_API_URL || "http://localhost:8000/api";
+
     this.api = axios.create({
-      baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api",
+      baseURL: baseUrl,
       timeout: 10000,
       headers: {
         "Content-Type": "application/json",
@@ -28,7 +31,7 @@ class ApiService {
 
     // Separate API instance for auth endpoints
     this.authApi = axios.create({
-      baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api",
+      baseURL: baseUrl,
       timeout: 10000,
       headers: {
         "Content-Type": "application/json",
@@ -36,26 +39,47 @@ class ApiService {
     });
 
     // Add auth token interceptor to both instances
-    const addAuthToken = (config: any) => {
+  const addAuthToken = (config: any): any => {
       const token = localStorage.getItem("authToken");
       config.headers = config.headers || {};
+
+      // Do not warn for auth endpoints that are expected to be called without a token
+      const authNoTokenPaths = ["/auth/login", "/auth/register", "/auth/refresh"];
+      const requestUrl = (config.url || "").toString();
+
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
-      } else {
-        // helpful debug: warn when no token
+      } else if (!authNoTokenPaths.some((p) => requestUrl.includes(p))) {
+        // helpful debug: warn when no token for non-auth endpoints
         console.warn('[api] no authToken in localStorage for request to', config.url);
       }
+
       // debug every outgoing request (method, url, hasToken)
       console.debug('[api] request', config.method?.toUpperCase(), config.url, 'hasToken=', !!token);
       return config;
     };
     
-    const handleAuthError = (error: any) => {
+  const handleAuthError = (error: any): any => {
+      // If error.response is undefined the request likely failed at network level (CORS, DNS, TLS/mixed-content, no route)
+      if (!error.response) {
+        console.error('[api] network/transport error', {
+          message: error.message,
+          config: error.config,
+        });
+        // Bubble up a normalized error so callers can show a friendly message
+        return Promise.reject({
+          message: 'Network error: could not reach API. Check API_BASE_URL, CORS and HTTPS settings.',
+          details: error.message,
+          config: error.config,
+        });
+      }
+
       console.error('[api] response error', {
         status: error.response?.status,
         url: error.config?.url,
-        data: error.response?.data
+        data: error.response?.data,
       });
+
       // Only handle 401 errors more carefully
       if (error.response?.status === 401) {
         console.warn(
@@ -106,28 +130,29 @@ class ApiService {
     };
 
     // Request interceptors
-    this.api.interceptors.request.use(addAuthToken, (error) =>
-      Promise.reject(error)
-    );
-    this.authApi.interceptors.request.use(addAuthToken, (error) =>
-      Promise.reject(error)
-    );
+    this.api.interceptors.request.use(addAuthToken, (error: any) => Promise.reject(error));
+    this.authApi.interceptors.request.use(addAuthToken, (error: any) => Promise.reject(error));
 
     // Response interceptors
-    this.api.interceptors.response.use((response) => response, handleAuthError);
-    this.authApi.interceptors.response.use(
-      (response) => response,
-      handleAuthError
-    );
+    this.api.interceptors.response.use((response: any) => response, handleAuthError);
+    this.authApi.interceptors.response.use((response: any) => response, handleAuthError);
   }
 
   // Auth endpoints
   async login(credentials: LoginRequest): Promise<AuthResponse> {
-    const response = await this.authApi.post<AuthResponse>(
-      "/auth/login",
-      credentials
-    );
-    return response.data;
+    try {
+      const response = await this.authApi.post<AuthResponse>("/auth/login", credentials);
+      return response.data;
+    } catch (err: any) {
+      // If this was a network error our handleAuthError above should have already normalized it, but
+      // ensure we throw a readable message for the AuthContext to display.
+      const message =
+        err?.message ||
+        err?.response?.data?.message ||
+        'Failed to contact authentication service. Please check network / API configuration.';
+      console.error('[api] login failed', { message, err });
+      throw new Error(message);
+    }
   }
 
   async register(userData: RegisterRequest): Promise<AuthResponse> {
@@ -455,7 +480,7 @@ class ApiService {
 
       // Filter for active cities and return full city objects with state info
       const activeCities =
-        response.data.data?.filter((city) => city.isActive) || [];
+  response.data.data?.filter((city: any) => city.isActive) || [];
 
       return {
         success: response.data.success,
