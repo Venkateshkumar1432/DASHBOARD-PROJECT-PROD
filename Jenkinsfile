@@ -14,34 +14,40 @@ pipeline {
             }
         }
 
-//     stage('Inject Env Files') {
-//     steps {
-//         script {
-//             def envFiles = [
-//                 "apps/admin-portal"           : "admin-portal-env",
-//                 "apps/api-gateway"            : "api-gateway-env",
-//                 "services/auth-service"       : "auth-service-env",
-//                 "services/client-store-service": "client-store-service-env",
-//                 "services/rider-service"      : "rider-service-env",
-//                 "services/spare-parts-service": "spare-parts-service-env",
-//                 "services/vehicle-service"    : "vehicle-service-env"
-//             ]
+    stage('Inject .env files') {
+      steps {
+        // 🔑 Ensure Jenkins has ownership + write permission on all files in workspace
+        sh '''
+            sudo chown -R jenkins:jenkins ${WORKSPACE}
+            sudo chmod -R 775 ${WORKSPACE}
+        '''
+        // Example for one service; repeat for each service with its credential id
+        withCredentials([file(credentialsId: 'auth-service-env-file', variable: 'AUTH_ENV')]) {
+          sh 'cp $AUTH_ENV services/auth-service/.env'
+        }
+        withCredentials([file(credentialsId: 'api-gateway-env-file', variable: 'GATEWAY_ENV')]) {
+          sh 'cp $GATEWAY_ENV api-gateway/.env'
+        }
+        withCredentials([file(credentialsId: 'admin-portal-env-file', variable: 'ADMIN_ENV')]) {
+          sh 'cp $ADMIN_ENV admin-portal/.env'
+        }
+        withCredentials([file(credentialsId: 'client-store-service-env-file', variable: 'CLIENT_ENV')]) {
+          sh 'cp $CLIENT_ENV services/client-store-service/.env'
+        }   
+        withCredentials([file(credentialsId: 'rider-service-env-file', variable: 'RIDER_ENV')]) {
+          sh 'cp $RIDER_ENV services/rider-service/.env'
+        }
+        withCredentials([file(credentialsId: 'vehicle-service-env-file', variable: 'VEHICLE_ENV')]) {
+          sh 'cp $VEHICLE_ENV services/vehicle-service/.env'
+        }
+        withCredentials([file(credentialsId: 'spare-parts-service-env-file', variable: 'SPARE_ENV')]) {
+          sh 'cp $SPARE_ENV services/spare-parts-service/.env'
+        }
+      }
+    }
+    
 
-//             envFiles.each { folder, credId ->
-//                 withCredentials([file(credentialsId: credId, variable: 'ENV_FILE')]) {
-//                     sh """
-//                         mkdir -p ${DEPLOY_DIR}/${folder}
-//                         cp $ENV_FILE ${DEPLOY_DIR}/${folder}/.env
-//                         chmod 600 ${DEPLOY_DIR}/${folder}/.env
-//                         ls -l ${DEPLOY_DIR}/${folder}/
-//                     """
-//                 }
-//             }
-//         }
-//     }
-// }
-
-        stage('Update Changed Services Only') {
+    stage('Update Changed Services Only') {
             steps {
                 script {
                     def commitCount = sh(
@@ -84,12 +90,6 @@ pipeline {
             }
         }
         
-        // stage('Cleanup Jenkins Workspace') {
-        //     steps {
-        //         echo "Cleaning Jenkins workspace..."
-        //         cleanWs()  // Automatically cleans everything in Jenkins job workspace
-        //     }
-        // }
         
         stage('Sync All Service/App Files') {
             steps {
@@ -119,6 +119,13 @@ pipeline {
                     cp ${WORKSPACE}/docker-compose.yml ${DEPLOY_DIR}/
                     cp ${WORKSPACE}/nginx.conf ${DEPLOY_DIR}/
                 """
+            }
+        }
+
+        stage('Cleanup Jenkins Workspace') {
+            steps {
+                echo "Cleaning Jenkins workspace..."
+                cleanWs()  // Automatically cleans everything in Jenkins job workspace
             }
         }
     }
