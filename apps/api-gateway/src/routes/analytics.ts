@@ -1,7 +1,7 @@
-
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import dotenv from 'dotenv';
+import http from 'http';
 
 dotenv.config();
 
@@ -12,17 +12,17 @@ const vehicleServiceUrl = process.env.VEHICLE_SERVICE_URL || 'http://localhost:4
 router.use('/', createProxyMiddleware({
   target: vehicleServiceUrl,
   changeOrigin: true,
-  pathRewrite: (path, req) => {
-    // This will remove the leading /api/v1/analytics from the path
-    // and leave the rest, so it can be forwarded to the vehicle service
+  pathRewrite: (path: string, req: Request) => {
     return path.replace(req.baseUrl, '');
   },
-  onProxyReq: (proxyReq, req, res) => {
-    console.log(`[API Gateway] Proxying request to: ${vehicleServiceUrl}${proxyReq.path}`);
-  },
-  onError: (err, req, res) => {
-    console.error('[API Gateway] Proxy error:', err);
-    res.status(500).json({ message: 'Proxy error', error: err.message });
+  on: {
+    proxyReq: (proxyReq: http.ClientRequest, req: Request, res: Response) => {
+      console.log(`[API Gateway] Proxying request to: ${vehicleServiceUrl}${proxyReq.path}`);
+    },
+    error: (err: Error, req: Request, res: Response) => {
+      console.error('[API Gateway] Proxy error:', err);
+      res.status(500).json({ message: 'Proxy error', error: err.message });
+    }
   }
 }));
 
