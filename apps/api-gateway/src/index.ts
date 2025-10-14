@@ -14,6 +14,7 @@ import clientStoreRoutes from "./routes/client-store";
 import riderRoutes from "./routes/riders";
 import sparePartsRoutes from "./routes/spare-parts";
 import orderRoutes from "./routes/orders";
+import analyticsRoutes from "./routes/analytics";
 
 // Import middleware
 import { authMiddleware } from "./middleware/auth";
@@ -220,6 +221,7 @@ app.get("/", (req: Request, res: Response) => {
       "v1-employees": "/api/v1/employees/*",
       "v1-teams": "/api/v1/teams/*",
       "v1-departments": "/api/v1/departments/*",
+      analytics: "/api/v1/analytics/*",
       orders: "/api/orders/*",
       internal: "/api/internal/*",
     },
@@ -285,6 +287,10 @@ app.use("/api/v1/roles", authRoutes);
 app.use("/api/v1/permissions", authRoutes);
 app.use("/api/v1/teams", authRoutes);
 app.use("/api/v1/departments", authRoutes);
+
+// Analytics routes (proxied to vehicle service)
+app.use("/api/v1/analytics", analyticsRoutes);
+app.use("/api/analytics", analyticsRoutes);
 
 // Internal API endpoints (for service-to-service and admin portal)
 app.use("/api/internal", authRoutes); // Internal endpoints handled by auth service

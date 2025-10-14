@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const VEHICLE_SERVICE_URL =
-  import.meta.env.VITE_VEHICLE_API_URL || "/api/vehicles";
+  import.meta.env.VITE_VEHICLE_API_URL || "/api";
 const VEHICLE_ANALYTICS_URL =
   import.meta.env.VITE_VEHICLE_ANALYTICS_URL ||
   "/api/v1/analytics";
