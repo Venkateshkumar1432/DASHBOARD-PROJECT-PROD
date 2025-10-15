@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         DEPLOY_DIR = "/home/ubuntu/microservices"
-        EC2_HOST = "43.204.218.253"
+        EC2_HOST = "13.235.117.7"
         EC2_USER = "ubuntu"
     }
 

@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import dotenv from 'dotenv';
 import http from 'http';
+import { Socket } from 'net';
 
 dotenv.config();
 
@@ -19,9 +20,13 @@ router.use('/', createProxyMiddleware({
     proxyReq: (proxyReq: http.ClientRequest, req: Request, res: Response) => {
       console.log(`[API Gateway] Proxying request to: ${vehicleServiceUrl}${proxyReq.path}`);
     },
-    error: (err: Error, req: Request, res: Response) => {
+    error: (err: Error, req: Request, res: Response | Socket) => {
       console.error('[API Gateway] Proxy error:', err);
-      res.status(500).json({ message: 'Proxy error', error: err.message });
+      if (res instanceof http.ServerResponse) {
+        res.status(500).json({ message: 'Proxy error', error: err.message });
+      } else if (res instanceof Socket) {
+        res.destroy();
+      }
     }
   }
 }));
